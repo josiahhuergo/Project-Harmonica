@@ -6,6 +6,7 @@ from typing import Optional
 from harmonica.utility import Mixed
 
 from ._pitchset import PitchSet
+from ._scales import PitchClassSet
 
 __all__ = ["PitchSetSeq"]
 
@@ -37,7 +38,7 @@ class PitchSetSeq:
     ## ANALYZE ##
 
     def all_sizes_equal(self) -> bool:
-        """Returns true if all pitch sets in the set are of the same length."""
+        """Returns true if all pitch sets in the set are of the same cardinality."""
 
         if len(self.pitch_sets) == 0:
             return True
@@ -79,3 +80,49 @@ class PitchSetSeq:
             onset += duration
 
         Clip([note_clip]).preview()
+
+
+@dataclass
+class PCSetSeq:
+    """Sequence of pitch class sets. Useful for representing chord progressions."""
+
+    ### DATA ###
+
+    pcsets: list[PitchClassSet]
+
+    ## MAGIC METHODS ##
+
+    def __len__(self) -> int:
+        return len(self.pcsets)
+
+    def __getitem__(self, item: int) -> PitchClassSet:
+        return self.pcsets[item]
+
+    ## TRANSFORM ##
+
+    def transpose(self, amount: int):
+        """Transposes all the pitch class sets in the sequence."""
+
+        for pcset in self.pcsets:
+            pcset.transpose(amount)
+
+    ## ANALYZE ##
+
+    def all_sizes_equal(self) -> bool:
+        """Returns true if all pitch class sets in the set are of the same cardinality."""
+
+        if len(self.pcsets) == 0:
+            return True
+
+        cardinality = self.pcsets[0].cardinality
+
+        if all([x.cardinality == cardinality for x in self.pcsets]):
+            return True
+        else:
+            return False
+
+    @property
+    def len(self) -> int:
+        """Returns the length of the sequence of pitch class sets."""
+
+        return len(self.pcsets)

@@ -159,7 +159,7 @@ class PCSequence:
 
         assert self.modulus > 0, "Modulus must be positive."
 
-    def __getitem__(self, item: int) -> int:
+    def __getitem__(self, item):
         return self.pitch_classes[item]
 
     def __len__(self) -> int:

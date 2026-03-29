@@ -42,11 +42,8 @@ class PitchClassSet:
         if self.root is not None:
             assert self.root in self.pitch_classes, "Root must be in pitch class set."
 
-    def __getitem__(self, item: int | slice) -> int | list[int]:
-        if isinstance(item, int):
-            return self.pitch_classes[item]
-        if isinstance(item, slice):
-            return self.pitch_classes[item.start : item.stop : item.step]
+    def __getitem__(self, item):
+        return self.pitch_classes[item]
 
     def __add__(self, other: int) -> PitchClassSet:
         return self.transposed(other)

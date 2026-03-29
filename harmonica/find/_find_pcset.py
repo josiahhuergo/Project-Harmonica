@@ -6,8 +6,10 @@ from harmonica.pitch._scales import PitchClassSet
 
 __all__ = ["find_pcset_supersets"]
 
+PCSetResults = Iterator[PitchClassSet]
 
-def find_pcset_supersets(pitch_class_set: PitchClassSet) -> Iterator[PitchClassSet]:
+
+def find_pcset_supersets(pitch_class_set: PitchClassSet) -> PCSetResults:
     complement = set(range(pitch_class_set.modulus)) - set(
         pitch_class_set.pitch_classes
     )
@@ -20,3 +22,15 @@ def find_pcset_supersets(pitch_class_set: PitchClassSet) -> Iterator[PitchClassS
             ),
             modulus=pitch_class_set.modulus,
         )
+
+
+def find_pcsets_containing_pclass(pclass: int, mod: int) -> PCSetResults:
+    return find_pcset_supersets(PitchClassSet([pclass], mod))
+
+
+def filter_min_size(pcsets: PCSetResults, min: int) -> PCSetResults:
+    return filter(lambda pcset: pcset.cardinality >= min, pcsets)
+
+
+def filter_max_size(pcsets: PCSetResults, max: int) -> PCSetResults:
+    return filter(lambda pcset: pcset.cardinality <= max, pcsets)
