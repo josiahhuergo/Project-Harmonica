@@ -4,6 +4,7 @@ from typing import Iterable, Optional, overload
 from dataclasses import dataclass, field
 import math
 
+from harmonica.pitch._pitchfunc import PitchFunc
 from harmonica.utility import (
     cumsum,
     cycle_cumsum,
@@ -120,8 +121,9 @@ class PitchClassSet:
         pitch_classes.sort()
         if self.root is not None:
             root = (self.root + amount) % self.modulus
-
-        return PitchClassSet(pitch_classes, self.modulus, root)
+            return PitchClassSet(pitch_classes, self.modulus, root)
+        else:
+            return PitchClassSet(pitch_classes, self.modulus)
 
     def normalize(self, pitch_class: int):
         """Transposes the pitch classes in the set so 0 is present."""
@@ -250,6 +252,45 @@ class PitchClassSet:
 
         return self.structure.prime.stamp_to_pcset(root)
 
+    def count_transpositions(self) -> int:
+        """Counts the number of distinct transpositions of
+        the pitch class set."""
+
+        return self.structure.count_transpositions()
+
+    def count_modes(self) -> int:
+        """Counts the number of distinct modes of the
+        pitch class set."""
+
+        return self.structure.count_modes()
+
+    def get_transpositions(self) -> list[PitchClassSet]:
+        """Returns a list of all transpositions of this pitch class set."""
+
+        transpositions: list[PitchClassSet] = []
+
+        num_transpositions = self.count_transpositions()
+
+        for t in range(num_transpositions):
+            transpositions.append(self.transposed(t))
+
+        return transpositions
+
+
+def get_transpositions(pcsets: list[PitchClassSet]) -> list[PitchClassSet]:
+    """Takes a list of pitch class sets, gets all the transpositions of each one,
+    and returns a combined list of all of them."""
+
+    combined_transpositions = []
+
+    for pcset in pcsets:
+        pcset_transpositions = pcset.get_transpositions()
+        for transposition in pcset_transpositions:
+            if transposition not in combined_transpositions:
+                combined_transpositions.append(transposition)
+
+    return combined_transpositions
+
 
 @dataclass
 class ScaleStructure:
@@ -287,7 +328,9 @@ class ScaleStructure:
         """Creates a pitch class set by "stamping" this scale structure onto pitch class
         space at the pitch class `starting_pitch`."""
 
-        return PitchClassSet(cycle_cumsum(self.intervals, starting_pitch), self.modulus)
+        return PitchClassSet(
+            cycle_cumsum(self.intervals, starting_pitch), self.modulus, starting_pitch
+        )
 
     def stamp_to_pcset_with_root(self, starting_pitch: int) -> PitchClassSet:
         """Creates a rooted pitch class set by "stamping" this scale structure onto pitch class
@@ -339,7 +382,7 @@ class ScaleStructure:
 
 
 @dataclass
-class ScaleFunc:
+class ScaleFunc(PitchFunc):
     """A scale function is a pattern of coefficients along with a transposition
     which models a scale, such as C major or Gb mixolydian.
 
@@ -379,24 +422,7 @@ class ScaleFunc:
             [harmonic > 0 for harmonic in self.pattern]
         ), "Elements of pattern must be greater than 0."
 
-    @overload
-    def __call__(self, n: int) -> int: ...
-
-    @overload
-    def __call__(self, n: Iterable[int]) -> list[int]: ...
-
-    def __call__(self, n):
-        return self.eval(n)
-
-    def __add__(self, amount: int):
-        self.transpose(amount)
-
     ## TRANSFORM ##
-
-    def transpose(self, amount: int):
-        """Shifts the transposition of the scale function."""
-
-        self.transposition += amount
 
     def rotate_mode_parallel(self, amount: int):
         """Rotates to a parallel mode, retaining the current transposition."""
@@ -446,40 +472,6 @@ class ScaleFunc:
 
     ## ANALYZE ##
 
-    @overload
-    def eval(self, n: int) -> int: ...
-
-    @overload
-    def eval(self, n: Iterable[int]) -> list[int]: ...
-
-    def eval(self, n: int | Iterable[int]) -> None | list[int] | int:
-        """Evaluates the scale function.
-
-        The object itself can be called like a function, yielding this evaluation.
-
-        >>> scale = ScaleFunc([2,3,5,7,9,10,12],2)
-        >>> scale(6)
-        12
-
-        You can also evaluate a list of integers:
-
-        >>> scale([1,3,4,6])
-        [4,7,9,12]
-        """
-
-        if isinstance(n, int):
-            return self._eval(n)
-        if isinstance(n, Iterable):
-            return [self._eval(i) for i in n]
-        return None
-
-    def _eval(self, n: int) -> int:
-        r = n % len(self.pattern)
-        q = int((n - r)) / self.cardinality
-
-        # Returns quotient * modulus + remainder + transposition
-        return int(q * self.modulus + self._rmap[r]) + self.transposition
-
     def count_transpositions(self) -> int:
         """Counts the number of unique transpositions of this scale function."""
 
@@ -526,12 +518,6 @@ class ScaleFunc:
         )
 
     @property
-    def modulus(self) -> int:
-        """Returns the modulus of the scale function."""
-
-        return self.pattern[-1]
-
-    @property
     def cardinality(self) -> int:
         """Returns the length of the function's coefficient pattern."""
 
@@ -542,10 +528,6 @@ class ScaleFunc:
         """Returns the structure of the corresponding scale."""
 
         return ScaleStructure(cycle_diff(self._rmap, self.modulus, 0))
-
-    @property
-    def _rmap(self) -> list[int]:  # residue map
-        return [0] + self.pattern[:-1]
 
 
 def normalize_interval(interval: int, mod: int) -> int:

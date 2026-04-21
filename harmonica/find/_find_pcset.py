@@ -16,10 +16,11 @@ def find_pcset_supersets(pitch_class_set: PitchClassSet) -> PCSetResults:
     pcset_powerset = powerset(complement)
 
     for other_pitch_classes in pcset_powerset:
+        pitch_classes = sorted(
+            pitch_class_set.pitch_classes + list(other_pitch_classes)
+        )
         yield PitchClassSet(
-            pitch_classes=sorted(
-                pitch_class_set.pitch_classes + list(other_pitch_classes)
-            ),
+            pitch_classes=pitch_classes,
             modulus=pitch_class_set.modulus,
         )
 

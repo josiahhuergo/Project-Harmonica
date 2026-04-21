@@ -6,6 +6,7 @@ from ._pitchsetshape import PitchSetShape
 from ._pitchfunc import PitchFunc
 from ._changes import PitchSetSeq
 from ._melody import PitchSeq, PitchSeqShape, PCSequence, PitchSeqSet
+from ._analysis import *
 
 __all__ = [
     # _scale
