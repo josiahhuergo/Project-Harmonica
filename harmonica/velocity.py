@@ -6,6 +6,8 @@ from math import floor
 from harmonica.utility._mixed import Mixed
 from harmonica.utility._utility import rotate
 
+__all__ = ["VelocityFunc"]
+
 
 @dataclass
 class VelocityFunc:

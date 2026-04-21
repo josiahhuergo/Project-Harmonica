@@ -74,6 +74,13 @@ class Clip(Generic[E], Event):
     def add_events(self, events: list[E | Self]):
         self.events.extend(events)
 
+    def remove_event(self, event: E | Self):
+        self.events.remove(event)
+
+    def remove_events(self, events: list[E | Self]):
+        for event in events:
+            self.events.remove(event)
+
     def write_midi(self, filename: str = "temp", tempo: int = 120):
         """Writes the notes in the timeline to a MIDI file. Without any arguments,
         this creates a file called temp.mid by default."""
@@ -222,7 +229,7 @@ class NoteClip(Clip[Note]):
 
     def __init__(
         self,
-        events: Sequence[Note | Self] = [],
+        events: list[Note | Self] = [],
         onset: Mixed = Mixed(0),
         program: int = 0,
     ) -> None:
@@ -231,6 +238,18 @@ class NoteClip(Clip[Note]):
 
     def get_notes(self) -> list[Note]:
         return Clip[Note].get_flattened_events(self)
+
+    def add_note(self, note: Note):
+        self.add_event(note)
+
+    def add_notes(self, notes: list):
+        self.add_events(notes)
+
+    def remove_note(self, note: Note):
+        self.remove_event(note)
+
+    def remove_notes(self, notes: list):
+        self.remove_events(notes)
 
     def set_program(self, program: int) -> Self:
         self.program = program
