@@ -148,24 +148,28 @@ def matrix_transpose(list_of_lists: list[list]) -> list[list]:
 
 def repeating_subseq(seq: list) -> list:
     """If there's a repeating sequence inside of the list, it will be returned.
-    Otherwise, it will return the original list."""
+    Otherwise, it will return the original list.
+
+    For example: [2,2,1,2,2,1,2,2,1] should return [2,2,1].
+    [2,1,2,2,1] should return [2,1,2,2,1]."""
 
     ref_window = []
     window = []
 
     for window_size in range(1, len(seq) + 1):
-        # Store first element as the "ref window".
-        ref_window = seq[0:window_size]
-        # It starts with window size one, and then it starts at position one.
-        for position in range(0, len(seq) - window_size, window_size):
+        # Only check windows whose length is a factor
+        # of the original list's length
+        if len(seq) % window_size != 0:
+            continue
+
+        for position in range(0, len(seq), window_size):
             window = seq[position : position + window_size]
-            # "Is this window equal to the ref window?"
             if window == ref_window:
-                continue  # If yes, then carry on.
-            else:  # If no, then continue to the next window size.
+                continue
+            else:
                 break
         else:
-            return window
+            return ref_window
 
     return seq
 
